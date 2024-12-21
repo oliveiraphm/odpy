@@ -364,6 +364,29 @@ python-dateutil = ">=2.7"
 dev = ["meson-python (>=0.13.1,<0.17.0)", "pybind11 (>=2.13.2,!=2.13.3)", "setuptools (>=64)", "setuptools_scm (>=7)"]
 
 [[package]]
+name = "mlxtend"
+version = "0.23.3"
+description = "Machine Learning Library Extensions"
+optional = false
+python-versions = "*"
+files = [
+    {file = "mlxtend-0.23.3-py3-none-any.whl", hash = "sha256:f9fec721c4121be87dac00e513456dde5bf56b7427750719c0a291cd58b6538e"},
+    {file = "mlxtend-0.23.3.tar.gz", hash = "sha256:e58b2ea6148043297529e15c39ded540f62d04e044d75c2497afbe4682002675"},
+]
+
+[package.dependencies]
+joblib = ">=0.13.2"
+matplotlib = ">=3.0.0"
+numpy = ">=1.16.2"
+pandas = ">=0.24.2"
+scikit-learn = ">=1.3.1"
+scipy = ">=1.2.1"
+
+[package.extras]
+docs = ["mkdocs", "mkdocs-bootswatch", "nbconvert", "python-markdown-math"]
+testing = ["pytest"]
+
+[[package]]
 name = "numpy"
 version = "2.2.0"
 description = "Fundamental package for array computing in Python"
@@ -825,4 +848,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "3.12.1"
-content-hash = "631c81e13c147a025412b53d636dd19814fabad9797b7a2b915be6cbdf33b228"
+content-hash = "91a21eea1fa64f81cfb959e2a2a13f6d3897e887d26269b2fd2ed808c05b01a3"
