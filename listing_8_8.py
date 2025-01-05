@@ -7,6 +7,7 @@ import seaborn as sns
 from pyod.models.iforest import IForest
 from pyod.models.lof import LOF
 from pyod.models.ecod import ECOD
+from sklearn.metrics import roc_auc_score
 
 data = fetch_openml('abalone', version=1)
 df = pd.DataFrame(data.data, columns=data.feature_names)
@@ -47,3 +48,29 @@ test_detector(LOF(), "LOF", df, clean_df, doped_df, ax[1])
 test_detector(ECOD(), "ECOD", df, clean_df, doped_df, ax[2])
 plt.tight_layout()
 plt.show()
+
+#listing 8.9
+test_df = pd.concat([df, doped_df])
+y_true = [0] * len(df) + [1] * len(doped_df)
+
+clf = IForest()
+clf.fit(clean_df)
+y_pred = clf.predict(test_df)
+if_auroc = roc_auc_score(y_true, y_pred)
+
+print(f"IForest AUROC: {if_auroc}")
+
+clf = LOF()
+clf.fit(clean_df)
+y_pred = clf.decision_function(test_df)
+loc_auroc = roc_auc_score(y_true, y_pred)
+
+print(f"LOF AUROC: {loc_auroc}")
+
+def test_training_size(n_rows):
+    clf = LOF()
+    clf.fit(clean_df.sample(n=nrows))
+    y_pred = clf.decision_function(test_df)
+    lof_auroc = roc_auc_score(y_true, y_pred)
+    return lof_auroc
+
