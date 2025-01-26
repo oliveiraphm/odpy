@@ -3,6 +3,8 @@ import pandas as pd
 from datetime import datetime, timedelta
 import seaborn as sns
 import matplotlib.pyplot as plt
+from sklearn.ensemble import IsolationForest
+import statistics
 
 class Purchacer:
     
@@ -151,5 +153,77 @@ purchases_df['Date'].diff().dt.days.value_counts()
 
 counts = pd.crosstab(index=purchases_df['Staff ID'], columns=purchases_df['Product ID'], values=purchases_df['Count'], aggfunc='sum')
 counts = counts.fillna(0)
-sns.histplot(counts.values.flatten(), bins=30)
+#sns.histplot(counts.values.flatten(), bins=30)
+#plt.show()
+
+unusual_products_df = purchases_df.groupby(['Product ID']).agg({
+    'Count': ['mean', 'sum']
+    , 'Unit Cost': ['mean', 'sum']
+    , 'Total Cost': ['mean', 'sum']
+    , 'Hour': ['mean', 'min', 'max']
+    , 'Purchase ID': ['count']
+})
+
+#print(unusual_products_df)
+
+agg_df = purchases_df.groupby(['Staff ID', 'Product ID']).agg({
+    'Count': ['mean', 'sum']
+    , 'Unit Cost': ['mean', 'sum']
+    , 'Total Cost': ['mean', 'sum']
+    , 'Hour': ['mean', 'min', 'max']
+    , 'Purchase ID': ['count']
+})
+
+#print(agg_df)
+
+det = IsolationForest()
+det.fit(agg_df)
+agg_df['IF Scores'] = det.decision_function(agg_df)
+agg_df.sort_values(['IF Scores'])
+
+agg_df_day = purchases_df.groupby(['Date']).agg({
+    'Count': ['mean', 'sum']
+    , 'Unit Cost': ['mean', 'sum']
+    , 'Total Cost': ['mean', 'sum']
+    , 'Purchase ID': ['count']
+})
+
+#print(agg_df_day)
+
+day_28_df = purchases_df[purchases_df['Day'] == 28]
+
+def p95(x):
+    return x.quantile(0.95)
+
+purchases_df.groupby(['Staff ID', 'Day']).agg({
+    'Count': ['mean', 'sum'], 
+    'Total Cost': ['mean', 'sum', p95],  
+    'Purchase ID': ['count']})
+#sns.histplot(purchases_df.groupby(['Staff ID', 'Day'])['Total Cost'].sum())
+#plt.show()
+
+sub_df = purchases_df[(purchases_df['Staff ID'] == 10) & (purchases_df['Day'] == 28) & (purchases_df['Product ID'] == 5)]
+fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(10,3))
+s = sns.lineplot(data=sub_df, x='Date', y='Count', ax=ax[0])
+s.set_xticklabels([])
+s = sns.lineplot(data=sub_df, x='Date', y='Unit Cost', ax=ax[1])
+s.set_xticklabels([])
+s = sns.lineplot(data=sub_df, x='Date', y='Total Cost', ax=ax[2])
+s.set_xticklabels([])
+
+plt.tight_layout()
 plt.show()
+
+def trend_func(x):
+    return statistics.mean(x[-3:]) / statistics.mean(x[:3])
+
+purchases_df = purchases_df.sort_values(['Staff ID', 'Product ID', 'Date'])
+staff_product_day_df = purchases_df.groupby(
+    ['Staff ID', 'Product ID', 'Day'], as_index=False).agg(
+    {'Purchase ID': 'count',
+     'Count': ['first','last', trend_func],
+     'Unit Cost': ['first','last', trend_func],
+     'Total Cost': ['first','last', trend_func]
+    })
+staff_product_day_df['Count Diff Last to First'] = staff_product_day_df[('Count', 'last')] - staff_product_day_df[('Count', 'first')]
+staff_product_day_df
