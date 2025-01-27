@@ -5,6 +5,8 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.ensemble import IsolationForest
 import statistics
+from scipy.spatial import distance
+
 
 class Purchacer:
     
@@ -226,4 +228,41 @@ staff_product_day_df = purchases_df.groupby(
      'Total Cost': ['first','last', trend_func]
     })
 staff_product_day_df['Count Diff Last to First'] = staff_product_day_df[('Count', 'last')] - staff_product_day_df[('Count', 'first')]
-staff_product_day_df
+#staff_product_day_df
+
+fig, ax = plt.subplots(nrows=2, ncols=4, figsize=(23,3))
+sns.countplot(data=purchases_df, x = 'Supplier ID', ax=ax[0][0])
+sns.countplot(data=purchases_df[purchases_df['Staff ID']==0], x = 'Supplier ID', ax=ax[0][1])
+sns.countplot(data=purchases_df[purchases_df['Staff ID']==1], x = 'Supplier ID', ax=ax[1][0])
+sns.countplot(data=purchases_df[purchases_df['Staff ID']==10], x = 'Supplier ID', ax=ax[1][1])
+plt.show()
+
+
+base_distribution = purchases_df.groupby('Supplier ID')['Count'].count()/11
+for staff_id in sorted(purchases_df['Staff ID'].unique()):
+    distrib = purchases_df[purchases_df['Staff ID']==staff_id].groupby('Supplier ID')['Count'].count()
+    print(distance.jensenshannon(distrib, base_distribution, 2.0))
+
+day_28_df = purchases_df[purchases_df['Day'] == 28]
+fig, ax = plt.subplots(nrows=2, ncols=2, sharey=True, figsize=(8,5))
+sns.countplot(data=day_28_df, x = 'Supplier ID', color='blue', ax=ax[0][0])
+sns.countplot(data=day_28_df[day_28_df['Staff ID']==0], x = 'Supplier ID', color='blue', ax=ax[0][1])
+sns.countplot(data=day_28_df[day_28_df['Staff ID']==1], x = 'Supplier ID', color='blue', ax=ax[1][0])
+sns.countplot(data=day_28_df[day_28_df['Staff ID']==10], x = 'Supplier ID', color='blue', ax=ax[1][1])
+plt.tight_layout()
+plt.show()
+
+purchases_df = purchases_df.sort_values(['Date', 'Hour', 'Minute'])
+purchases_df['Avg Unit Cost Prev 10'] = purchases_df['Unit Cost'].rolling(window=10).mean()
+purchases_df['Daily Cummulative Total Cost'] = purchases_df.groupby('Date')['Total Cost'].cumsum()
+
+purchases_df = purchases_df.sort_values(['Product ID', 'Date', 'Hour', 'Minute'])
+purchases_df['Rolling Mean'] = purchases_df.groupby('Product ID')['Unit Cost'].rolling(window=10).mean().values
+
+det = IsolationForest(random_state=0)
+df = purchases_df.copy()
+subspace_df = df[['Unit Cost', 'Total Cost', 'Count']]
+det.fit(subspace_df)
+df['IF Scores'] = det.decision_function(subspace_df)
+df = df.sort_values(['IF Scores'])
+df.head(10)['Staff ID'].value_counts()
