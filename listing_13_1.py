@@ -3,6 +3,12 @@ import numpy as np
 from sklearn.datasets import fetch_openml
 from sklearn.ensemble import IsolationForest
 import shap
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.model_selection import cross_validate
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.tree import DecisionTreeClassifier
+from sklearn import tree
 
 np.random.seed(0)
 
@@ -41,3 +47,31 @@ s_list = sorted(list(zip(pyod_clf.feature_importances_, df.columns)), reverse=Tr
 importance_score, col_names = zip(*s_list)
 sns.barplot(orient='h', y=np.array(col_names), x=np.array(importance_score))
 plt.show()
+
+np.random.seed(0)
+
+regr = DecisionTreeRegressor(random_state=0)
+cv_results = cross_validate(regr, df[orig_features], df['IF Score'], cv=3)
+print(cv_results)
+
+regr = DecisionTreeRegressor(max_leaf_nodes=10)
+cv_results = cross_validate(regr, df[orig_features], df['IF Score'], cv=3)
+print(cv_results)
+
+regr = DecisionTreeRegressor(max_leaf_nodes=10)
+regr.fit(df[orig_features], df['IF Score'])
+df['DT Prediction'] = regr.predict(df[orig_features])
+
+sns.scatterplot(data=df, x='IF Score', y='DT Prediction')
+plt.show()
+
+clf = DecisionTreeClassifier(random_state=0)
+df['IF Binary'] = df['IF Score'] < -0.60
+
+cv_results = cross_validate(clf, df[orig_features], df['IF Binary'], cv=3, scoring='f1_macro')
+print(cv_results)
+
+clf = DecisionTreeClassifier(random_state=0, max_leaf_nodes=10)
+clf.fit(df[orig_features], df['IF Binary'])
+df['DT Binary Prediction'] = clf.predict(df[orig_features])
+print(tree.export_text(clf, feature_name=orig_features))
