@@ -75,3 +75,9 @@ clf = DecisionTreeClassifier(random_state=0, max_leaf_nodes=10)
 clf.fit(df[orig_features], df['IF Binary'])
 df['DT Binary Prediction'] = clf.predict(df[orig_features])
 print(tree.export_text(clf, feature_name=orig_features))
+
+from prism_rules import PrismRules
+
+df['IF Binary'] = df['IF Score'] <= -0.6
+prism = PrismRules(nbins=3)
+_ = prism.get_prism_rules(df[orig_features + ['IF Binary']], 'IF Binary')
