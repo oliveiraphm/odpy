@@ -133,3 +133,58 @@ for num_detectors in range(1, 6):
     print((f"\nUsing {num_detectors} detectors, the best set of " 
            f"detectors found is: \n{best_set_detectors} with an "
            f"agreement score of {best_agreement}"))
+    
+
+#listing14_8
+
+scores_cols = list(set(scores_df.columns) - set(df.columns))
+scores_cols.remove('Score')
+
+detectors_used = []
+detectors_not_used = scores_cols.copy()
+
+for num_detectors in range(6):
+    best_next_detector = ""
+    best_agreement = -1
+    for detector in detectors_not_used:
+        potential_set = detectors_used + [detector]
+        res = test_agreement(df, potential_set, 'Score')
+        if res > best_agreement:
+            best_agreement = res
+            best_next_detector = detector
+    detectors_used.append(best_next_detector)
+    detectors_not_used.remove(best_next_detector)
+    print((f"Using {num_detectors}, the best set is:"
+           f"{detectors_used} with an agreement score of "
+           f"{best_agreement}"))
+    
+
+#listing14_9
+weight = 0.7 
+scores_cols = list(set(scores_df.columns) - set(df.columns))
+scores_cols.remove('Score')
+
+detectors_used = [] 
+detectors_not_used = scores_cols.copy()
+
+for num_detectors in range(6): 
+    best_next_detector = ""
+    best_agreement = -1
+    for detector in detectors_not_used: 
+        potential_set = detectors_used + [detector]
+        agreement_target = test_agreement(
+           scores_df, potential_set, 'Score')
+        if len(detectors_used) > 0:
+            agreement_ensemble = test_agreement(
+               scores_df, detectors_used, detector)
+        else:
+            agreement_ensemble = 0.0 
+        res = (weight*agreement_target) + (1.0-weight)*agreement_ensemble
+        if res > best_agreement: 
+            best_agreement = res
+            best_next_detector = detector
+    detectors_used.append(best_next_detector)
+    detectors_not_used.remove(best_next_detector)
+    print((f"Using {num_detectors}, the best set is: "
+           f"{detectors_used} with an agreement score of "
+           f"{best_agreement}"))
